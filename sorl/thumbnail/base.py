@@ -98,35 +98,34 @@ class ThumbnailBackend(object):
 
         # We have to check exists() because the Storage backend does not
         # overwrite in some implementations.
-        if not thumbnail.exists():
-            try:
-                source_image = default.engine.get_image(source)
-            except IOError as e:
-                logger.exception(e)
-                if settings.THUMBNAIL_DUMMY:
-                    return DummyImageFile(geometry_string)
-                else:
-                    # if S3Storage says file doesn't exist remotely, don't try to
-                    # create it and exit early.
-                    # Will return working empty image type; 404'd image
-                    logger.warn(text_type('Remote file [%s] at [%s] does not exist'),
-                                file_, geometry_string)
+        try:
+            source_image = default.engine.get_image(source)
+        except IOError as e:
+            logger.exception(e)
+            if settings.THUMBNAIL_DUMMY:
+                return DummyImageFile(geometry_string)
+            else:
+                # if S3Storage says file doesn't exist remotely, don't try to
+                # create it and exit early.
+                # Will return working empty image type; 404'd image
+                logger.warn(text_type('Remote file [%s] at [%s] does not exist'),
+                            file_, geometry_string)
 
-                    return thumbnail
+                return thumbnail
 
-            # We might as well set the size since we have the image in memory
-            image_info = default.engine.get_image_info(source_image)
-            options['image_info'] = image_info
-            size = default.engine.get_image_size(source_image)
-            source.set_size(size)
+        # We might as well set the size since we have the image in memory
+        image_info = default.engine.get_image_info(source_image)
+        options['image_info'] = image_info
+        size = default.engine.get_image_size(source_image)
+        source.set_size(size)
 
-            try:
-                self._create_thumbnail(source_image, geometry_string, options,
-                                       thumbnail)
-                self._create_alternative_resolutions(source_image, geometry_string,
-                                                     options, thumbnail.name)
-            finally:
-                default.engine.cleanup(source_image)
+        try:
+            self._create_thumbnail(source_image, geometry_string, options,
+                                   thumbnail)
+            self._create_alternative_resolutions(source_image, geometry_string,
+                                                 options, thumbnail.name)
+        finally:
+            default.engine.cleanup(source_image)
 
         # If the thumbnail exists we don't create it, the other option is
         # to delete and write but this could lead to race conditions so I
