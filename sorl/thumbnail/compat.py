@@ -24,14 +24,8 @@ PY3 = PythonVersion == 3
 # -- import_module
 from importlib import import_module
 
-# -- Related to django 1.5 incompatibility
-
-if django.VERSION < (1, 5):
-    from django.utils import simplejson as json
-    from django.utils.encoding import force_unicode
-else:
-    import json
-    from django.utils.encoding import force_text as force_unicode
+import json
+from django.utils.encoding import force_text as force_unicode
 
 # -- Cache
 
